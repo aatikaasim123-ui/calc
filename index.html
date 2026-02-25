@@ -30,7 +30,6 @@
       overflow: hidden;
     }
 
-    /* Subtle grid background */
     body::before {
       content: '';
       position: fixed;
@@ -43,7 +42,8 @@
       pointer-events: none;
     }
 
-    .wrapper {
+    /* ── CALCULATOR PAGE ── */
+    #calc-page {
       position: relative;
       z-index: 1;
       width: 100%;
@@ -56,11 +56,21 @@
       letter-spacing: 0.08em;
       color: var(--accent);
       line-height: 1;
-      margin-bottom: 0.25rem;
+      margin-bottom: 0.15rem;
+    }
+
+    .heading-sub {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.8rem;
+      font-weight: 400;
+      color: var(--text);
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      margin-bottom: 0.35rem;
     }
 
     .subtitle {
-      font-size: 0.7rem;
+      font-size: 0.65rem;
       color: var(--muted);
       letter-spacing: 0.2em;
       text-transform: uppercase;
@@ -74,9 +84,7 @@
       padding: 2rem;
     }
 
-    .field {
-      margin-bottom: 1.25rem;
-    }
+    .field { margin-bottom: 1.25rem; }
 
     label {
       display: block;
@@ -123,27 +131,6 @@
     button:hover { opacity: 0.88; }
     button:active { transform: scale(0.98); }
 
-    .result {
-      margin-top: 1.75rem;
-      padding: 1.25rem 1rem;
-      border: 1px solid var(--border);
-      border-left: 3px solid var(--accent);
-      border-radius: 2px;
-      font-size: 1.5rem;
-      font-weight: 500;
-      color: var(--accent);
-      letter-spacing: 0.05em;
-      opacity: 0;
-      transform: translateY(6px);
-      transition: opacity 0.35s ease, transform 0.35s ease;
-      display: none;
-    }
-    .result.show {
-      display: block;
-      opacity: 1;
-      transform: translateY(0);
-    }
-
     .footer {
       margin-top: 1.5rem;
       font-size: 0.6rem;
@@ -152,12 +139,51 @@
       text-align: center;
       text-transform: uppercase;
     }
+
+    /* ── HELLO WORLD PAGE ── */
+    #hello-page {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      background: var(--bg);
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity 0.4s ease;
+    }
+
+    #hello-page.visible {
+      display: flex;
+    }
+
+    #hello-page.faded {
+      opacity: 1;
+    }
+
+    #hello-page h2 {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(3rem, 12vw, 7rem);
+      letter-spacing: 0.1em;
+      color: var(--accent);
+    }
+
+    #back-btn {
+      margin-top: 2.5rem;
+      width: auto;
+      padding: 0.65rem 2rem;
+      font-size: 0.65rem;
+    }
   </style>
 </head>
 <body>
-  <div class="wrapper">
+
+  <!-- Calculator Page -->
+  <div id="calc-page">
     <h1>Calc</h1>
-    <p class="subtitle">Simple Calculator</p>
+    <p class="heading-sub">Simple Addition</p>
+    <p class="subtitle">Enter two numbers below</p>
 
     <div class="card">
       <div class="field">
@@ -169,34 +195,44 @@
         <input type="number" id="num2" placeholder="0" />
       </div>
       <button onclick="calculate()">Calculate</button>
-
-      <div class="result" id="result"></div>
     </div>
 
-    <p class="footer">Enter any two numbers &amp; press calculate</p>
+    <p class="footer">Press Enter or click Calculate</p>
+  </div>
+
+  <!-- Hello World Page -->
+  <div id="hello-page">
+    <h2>Hello World</h2>
+    <button id="back-btn" onclick="goBack()">&#8592; Go Back</button>
   </div>
 
   <script>
     function calculate() {
       const n1 = document.getElementById('num1').value;
       const n2 = document.getElementById('num2').value;
-      const resultEl = document.getElementById('result');
 
       if (n1 === '' || n2 === '') {
-        resultEl.textContent = 'Please enter both numbers.';
-        resultEl.classList.add('show');
+        alert('Please enter both numbers first.');
         return;
       }
 
-      resultEl.classList.remove('show');
-      // Small delay to re-trigger animation if already shown
-      setTimeout(() => {
-        resultEl.textContent = 'Hello World';
-        resultEl.classList.add('show');
-      }, 50);
+      const helloPage = document.getElementById('hello-page');
+      helloPage.classList.add('visible');
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          helloPage.classList.add('faded');
+        });
+      });
     }
 
-    // Allow Enter key to trigger calculate
+    function goBack() {
+      const helloPage = document.getElementById('hello-page');
+      helloPage.classList.remove('faded');
+      helloPage.addEventListener('transitionend', () => {
+        helloPage.classList.remove('visible');
+      }, { once: true });
+    }
+
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') calculate();
     });
