@@ -140,8 +140,8 @@
       text-transform: uppercase;
     }
 
-    /* ── HELLO WORLD PAGE ── */
-    #hello-page {
+    /* ── RESULT PAGE ── */
+    #result-page {
       display: none;
       position: fixed;
       inset: 0;
@@ -151,33 +151,124 @@
       align-items: center;
       justify-content: center;
       opacity: 0;
-      transition: opacity 0.4s ease;
+      transition: opacity 0.15s ease;
     }
 
-    #hello-page.visible {
-      display: flex;
+    #result-page.visible { display: flex; }
+    #result-page.faded { opacity: 1; }
+
+    /* Screen shake */
+    #result-page.shake {
+      animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
     }
 
-    #hello-page.faded {
-      opacity: 1;
+    @keyframes shake {
+      0%,100% { transform: translate(0,0); }
+      10% { transform: translate(-10px, -5px); }
+      20% { transform: translate(10px, 5px); }
+      30% { transform: translate(-8px, 3px); }
+      40% { transform: translate(8px, -3px); }
+      50% { transform: translate(-5px, 5px); }
+      60% { transform: translate(5px, -5px); }
+      70% { transform: translate(-3px, 2px); }
+      80% { transform: translate(3px, -2px); }
+      90% { transform: translate(-1px, 1px); }
     }
 
-    #hello-page h2 {
+    /* The number itself */
+    #result-number {
       font-family: 'Bebas Neue', sans-serif;
-      font-size: clamp(3rem, 12vw, 7rem);
-      letter-spacing: 0.1em;
+      font-size: clamp(5rem, 28vw, 16rem);
       color: var(--accent);
+      letter-spacing: 0.04em;
+      line-height: 1;
+      transform: scale(20);
+      opacity: 0;
+      filter: blur(10px);
+      text-shadow:
+        0 0 80px rgba(232, 255, 60, 0.9),
+        0 0 160px rgba(232, 255, 60, 0.5);
     }
+
+    #result-number.slam {
+      animation: slam 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    @keyframes slam {
+      0% {
+        transform: scale(20);
+        opacity: 0;
+        filter: blur(12px);
+        text-shadow: 0 0 200px rgba(232,255,60,1), 0 0 400px rgba(232,255,60,0.6);
+      }
+      35% {
+        opacity: 1;
+        filter: blur(0);
+      }
+      65% {
+        transform: scale(0.9);
+        text-shadow: 0 0 40px rgba(232,255,60,0.6), 0 0 80px rgba(232,255,60,0.3);
+      }
+      80% {
+        transform: scale(1.07);
+      }
+      90% {
+        transform: scale(0.97);
+      }
+      100% {
+        transform: scale(1);
+        opacity: 1;
+        filter: blur(0);
+        text-shadow: 0 0 20px rgba(232,255,60,0.35), 0 0 50px rgba(232,255,60,0.15);
+      }
+    }
+
+    /* White flash on impact */
+    #flash {
+      position: fixed;
+      inset: 0;
+      background: var(--accent);
+      z-index: 200;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    #flash.pop {
+      animation: flashpop 0.4s ease-out forwards;
+    }
+
+    @keyframes flashpop {
+      0%   { opacity: 0.6; }
+      100% { opacity: 0; }
+    }
+
+    /* Fade-in elements after slam */
+    .result-label {
+      font-size: 0.6rem;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-top: 1.5rem;
+      opacity: 0;
+      transition: opacity 0.4s ease 0.55s;
+    }
+    .result-label.show { opacity: 1; }
 
     #back-btn {
-      margin-top: 2.5rem;
+      margin-top: 2rem;
       width: auto;
       padding: 0.65rem 2rem;
       font-size: 0.65rem;
+      opacity: 0;
+      transition: opacity 0.4s ease 0.65s;
     }
+    #back-btn.show { opacity: 1; }
   </style>
 </head>
 <body>
+
+  <!-- Flash overlay -->
+  <div id="flash"></div>
 
   <!-- Calculator Page -->
   <div id="calc-page">
@@ -200,9 +291,10 @@
     <p class="footer">Press Enter or click Calculate</p>
   </div>
 
-  <!-- Hello World Page -->
-  <div id="hello-page">
-    <h2>Hello World</h2>
+  <!-- Result Page -->
+  <div id="result-page">
+    <div id="result-number"></div>
+    <p class="result-label" id="result-label">Result</p>
     <button id="back-btn" onclick="goBack()">&#8592; Go Back</button>
   </div>
 
@@ -216,20 +308,55 @@
         return;
       }
 
-      const helloPage = document.getElementById('hello-page');
-      helloPage.classList.add('visible');
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          helloPage.classList.add('faded');
-        });
-      });
+      const resultNum = document.getElementById('result-number');
+      const resultPage = document.getElementById('result-page');
+      const flash = document.getElementById('flash');
+      const resultLabel = document.getElementById('result-label');
+      const backBtn = document.getElementById('back-btn');
+
+      // Set the result
+      resultNum.textContent = 67;
+
+      // Reset all animation state cleanly
+      resultNum.classList.remove('slam');
+      resultPage.classList.remove('shake');
+      flash.classList.remove('pop');
+      resultLabel.classList.remove('show');
+      backBtn.classList.remove('show');
+      void resultNum.offsetWidth; // force reflow
+
+      // Show page, then trigger the slam
+      resultPage.classList.add('visible');
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        resultPage.classList.add('faded');
+
+        setTimeout(() => {
+          flash.classList.add('pop');
+          resultNum.classList.add('slam');
+          resultPage.classList.add('shake');
+
+          setTimeout(() => {
+            resultLabel.classList.add('show');
+            backBtn.classList.add('show');
+          }, 550);
+        }, 100);
+      }));
     }
 
     function goBack() {
-      const helloPage = document.getElementById('hello-page');
-      helloPage.classList.remove('faded');
-      helloPage.addEventListener('transitionend', () => {
-        helloPage.classList.remove('visible');
+      const resultPage = document.getElementById('result-page');
+      const resultNum = document.getElementById('result-number');
+      const resultLabel = document.getElementById('result-label');
+      const backBtn = document.getElementById('back-btn');
+      const flash = document.getElementById('flash');
+
+      resultPage.classList.remove('faded');
+      resultPage.addEventListener('transitionend', () => {
+        resultPage.classList.remove('visible', 'shake');
+        resultNum.classList.remove('slam');
+        resultLabel.classList.remove('show');
+        backBtn.classList.remove('show');
+        flash.classList.remove('pop');
       }, { once: true });
     }
 
